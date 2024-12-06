@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 // Інтерфейс для реалізації математичних операцій
 public interface ITransformation
@@ -70,53 +71,30 @@ public class Transformation3D : ITransformation
     }
 }
 
-// Абстракція, що використовує конкретну реалізацію
-public abstract class Transformation
+// Декоратор для вимірювання часу виконання методів
+public class TimerDecorator : ITransformation
 {
-    protected ITransformation transformation;
+    private readonly ITransformation _transformation;
 
-    public Transformation(ITransformation transformation)
+    public TimerDecorator(ITransformation transformation)
     {
-        this.transformation = transformation;
+        _transformation = transformation;
     }
 
-    public abstract void ApplyTransformation(int x, int y);
-    public abstract void ApplyTransformation(int x, int y, int z);
-}
-
-// Абстракція для 2D трансформації
-public class Transformation2DAdapter : Transformation
-{
-    public Transformation2DAdapter(ITransformation transformation) : base(transformation)
+    public void ApplyTransformation(int x, int y)
     {
+        Stopwatch stopwatch = Stopwatch.StartNew();
+        _transformation.ApplyTransformation(x, y);
+        stopwatch.Stop();
+        Console.WriteLine($"Час виконання 2D трансформації: {stopwatch.ElapsedMilliseconds} мс");
     }
 
-    public override void ApplyTransformation(int x, int y)
+    public void ApplyTransformation(int x, int y, int z)
     {
-        transformation.ApplyTransformation(x, y);
-    }
-
-    public override void ApplyTransformation(int x, int y, int z)
-    {
-        throw new NotImplementedException("2D адаптер не підтримує Z-координату");
-    }
-}
-
-// Абстракція для 3D трансформації
-public class Transformation3DAdapter : Transformation
-{
-    public Transformation3DAdapter(ITransformation transformation) : base(transformation)
-    {
-    }
-
-    public override void ApplyTransformation(int x, int y)
-    {
-        throw new NotImplementedException("3D адаптер не підтримує 2D трансформацію");
-    }
-
-    public override void ApplyTransformation(int x, int y, int z)
-    {
-        transformation.ApplyTransformation(x, y, z);
+        Stopwatch stopwatch = Stopwatch.StartNew();
+        _transformation.ApplyTransformation(x, y, z);
+        stopwatch.Stop();
+        Console.WriteLine($"Час виконання 3D трансформації: {stopwatch.ElapsedMilliseconds} мс");
     }
 }
 
@@ -126,23 +104,32 @@ class Program
     {
         // Вибір трансформації 2D
         ITransformation t2d = new Transformation2D(1, 2, 3, 4, 5, 6);
-        Transformation transformation2D = new Transformation2DAdapter(t2d);
+        ITransformation decoratedT2D = new TimerDecorator(t2d);
 
         Console.WriteLine("Введіть координати для 2D:");
-        int x2d = int.Parse(Console.ReadLine());
-        int y2d = int.Parse(Console.ReadLine());
-
-        transformation2D.ApplyTransformation(x2d, y2d);
+        int x2d, y2d;
+        if (int.TryParse(Console.ReadLine(), out x2d) && int.TryParse(Console.ReadLine(), out y2d))
+        {
+            decoratedT2D.ApplyTransformation(x2d, y2d);
+        }
+        else
+        {
+            Console.WriteLine("Невірний ввід для 2D координат!");
+        }
 
         // Вибір трансформації 3D
         ITransformation t3d = new Transformation3D(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
-        Transformation transformation3D = new Transformation3DAdapter(t3d);
+        ITransformation decoratedT3D = new TimerDecorator(t3d);
 
         Console.WriteLine("Введіть координати для 3D:");
-        int x3d = int.Parse(Console.ReadLine());
-        int y3d = int.Parse(Console.ReadLine());
-        int z3d = int.Parse(Console.ReadLine());
-
-        transformation3D.ApplyTransformation(x3d, y3d, z3d);
+        int x3d, y3d, z3d;
+        if (int.TryParse(Console.ReadLine(), out x3d) && int.TryParse(Console.ReadLine(), out y3d) && int.TryParse(Console.ReadLine(), out z3d))
+        {
+            decoratedT3D.ApplyTransformation(x3d, y3d, z3d);
+        }
+        else
+        {
+            Console.WriteLine("Невірний ввід для 3D координат!");
+        }
     }
 }
